@@ -61,7 +61,7 @@ public class TranslateText implements BackgroundFunction<Message> {
     String translatedText = response.getTranslations(0).getTranslatedText();
 
     // Send translated text to (subsequent) Pub/Sub topic
-    String filename = ocrMessage.getFilename();
+    String filename = apiMessage.getFilename();
     ApiMessage translateMessage = new ApiMessage(
         translatedText, filename, targetLang);
     try {
