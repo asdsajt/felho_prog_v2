@@ -1,22 +1,5 @@
-/*
- * Copyright 2020 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 package functions;
-
-// [START functions_ocr_process]
 
 import com.google.cloud.functions.BackgroundFunction;
 import com.google.cloud.functions.Context;
@@ -42,14 +25,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-// [END functions_ocr_process]
 
-// [START functions_ocr_setup]
 public class OcrProcessImage implements BackgroundFunction<GcsEvent> {
   // TODO<developer> set these environment variables
   private static final String PROJECT_ID = System.getenv("GCP_PROJECT");
   private static final String TRANSLATE_TOPIC_NAME = System.getenv("TRANSLATE_TOPIC");
-  private static final String[] TO_LANGS = System.getenv("TO_LANG").split(",");
+  private static final String TO_LANGS = System.getenv("TO_LANG");
 
   private static final Logger logger = Logger.getLogger(OcrProcessImage.class.getName());
   private static final String LOCATION_NAME = LocationName.of(PROJECT_ID, "global").toString();
@@ -59,9 +40,7 @@ public class OcrProcessImage implements BackgroundFunction<GcsEvent> {
     publisher = Publisher.newBuilder(
         ProjectTopicName.of(PROJECT_ID, TRANSLATE_TOPIC_NAME)).build();
   }
-  // [END functions_ocr_setup]
 
-  // [START functions_ocr_process]
   @Override
   public void accept(GcsEvent gcsEvent, Context context) {
 
@@ -77,9 +56,7 @@ public class OcrProcessImage implements BackgroundFunction<GcsEvent> {
 
     detectText(bucket, filename);
   }
-  // [END functions_ocr_process]
 
-  // [START functions_ocr_detect]
   private void detectText(String bucket, String filename) {
     logger.info("Looking for text in image " + filename);
 
@@ -143,24 +120,20 @@ public class OcrProcessImage implements BackgroundFunction<GcsEvent> {
     logger.info(String.format("Detected language %s for file %s", languageCode, filename));
 
     // Send a Pub/Sub translation request for every language we're going to translate to
-    for (String targetLanguage : TO_LANGS) {
-      logger.info("Sending translation request for language " + targetLanguage);
-      ApiMessage message = new ApiMessage(text, filename, targetLanguage);
-      ByteString byteStr = ByteString.copyFrom(message.toPubsubData());
-      PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
-      try {
-        publisher.publish(pubsubApiMessage).get();
-      } catch (InterruptedException | ExecutionException e) {
-        // Log error
-        logger.log(Level.SEVERE, "Error publishing translation request: " + e.getMessage(), e);
-        return;
-      }
-    }
-  }
-  // [END functions_ocr_detect]
 
-  // [START functions_ocr_process]
-  // [START functions_ocr_setup]
+    logger.info("Sending translation request for language " + TO_LANGS);
+    ApiMessage message = new ApiMessage(text, filename, TO_LANGS);
+    ByteString byteStr = ByteString.copyFrom(message.toPubsubData());
+    PubsubMessage pubsubApiMessage = PubsubMessage.newBuilder().setData(byteStr).build();
+    try {
+      publisher.publish(pubsubApiMessage).get();
+    } catch (InterruptedException | ExecutionException e) {
+      // Log error
+      logger.log(Level.SEVERE, "Error publishing translation request: " + e.getMessage(), e);
+      return;
+    }
+
+  }
+
 }
-// [END functions_ocr_setup]
-// [END functions_ocr_process]
+
