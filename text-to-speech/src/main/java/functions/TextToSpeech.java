@@ -28,7 +28,6 @@ public class TextToSpeech implements BackgroundFunction<Message> {
     ApiMessage apiMessage = ApiMessage.fromPubsubData(
             message.getData().getBytes(StandardCharsets.UTF_8));
 
-
     try (TextToSpeechClient textToSpeechClient = TextToSpeechClient.create()) {
       // Set the text input to be synthesized
       SynthesisInput input = SynthesisInput.newBuilder().setText(apiMessage.getText()).build();

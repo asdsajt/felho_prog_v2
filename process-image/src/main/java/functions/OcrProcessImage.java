@@ -95,30 +95,6 @@ public class OcrProcessImage implements BackgroundFunction<GcsEvent> {
     String text = visionResponse.getFullTextAnnotation().getText();
     logger.info("Extracted text from image: " + text);
 
-    // Detect language using the Cloud Translation API
-    DetectLanguageRequest languageRequest =
-        DetectLanguageRequest.newBuilder()
-            .setParent(LOCATION_NAME)
-            .setMimeType("text/plain")
-            .setContent(text)
-            .build();
-    DetectLanguageResponse languageResponse;
-    try (TranslationServiceClient client = TranslationServiceClient.create()) {
-      languageResponse = client.detectLanguage(languageRequest);
-    } catch (IOException e) {
-      // Log error (since IOException cannot be thrown by a function)
-      logger.log(Level.SEVERE, "Error detecting language: " + e.getMessage(), e);
-      return;
-    }
-
-    if (languageResponse.getLanguagesCount() == 0) {
-      logger.info("No languages were detected for text: " + text);
-      return;
-    }
-
-    String languageCode = languageResponse.getLanguages(0).getLanguageCode();
-    logger.info(String.format("Detected language %s for file %s", languageCode, filename));
-
     // Send a Pub/Sub translation request for every language we're going to translate to
 
     logger.info("Sending translation request for language " + TO_LANGS);

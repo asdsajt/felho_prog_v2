@@ -34,26 +34,23 @@ public class TranslateText implements BackgroundFunction<Message> {
 
   @Override
   public void accept(Message message, Context context) {
-    ApiMessage ocrMessage = ApiMessage.fromPubsubData(
+    ApiMessage apiMessage = ApiMessage.fromPubsubData(
         message.getData().getBytes(StandardCharsets.UTF_8));
 
     String targetLang = "hu";
 
-    // Translate text to target language
-    String text = ocrMessage.getText();
     TranslateTextRequest request =
         TranslateTextRequest.newBuilder()
             .setParent(LOCATION_NAME)
             .setMimeType("text/plain")
             .setTargetLanguageCode(targetLang)
-            .addContents(text)
+            .addContents(apiMessage.getText())
             .build();
 
     TranslateTextResponse response;
     try (TranslationServiceClient client = TranslationServiceClient.create()) {
       response = client.translateText(request);
     } catch (IOException e) {
-      // Log error (since IOException cannot be thrown by a function)
       logger.log(Level.SEVERE, "Error translating text: " + e.getMessage(), e);
       return;
     }
