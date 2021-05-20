@@ -27,13 +27,11 @@ import java.util.logging.Logger;
 
 
 public class OcrProcessImage implements BackgroundFunction<GcsEvent> {
-  // TODO<developer> set these environment variables
   private static final String PROJECT_ID = System.getenv("GCP_PROJECT");
   private static final String TRANSLATE_TOPIC_NAME = System.getenv("TRANSLATE_TOPIC");
   private static final String TO_LANGS = System.getenv("TO_LANG");
 
   private static final Logger logger = Logger.getLogger(OcrProcessImage.class.getName());
-  private static final String LOCATION_NAME = LocationName.of(PROJECT_ID, "global").toString();
   private Publisher publisher;
 
   public OcrProcessImage() throws IOException {
@@ -43,8 +41,6 @@ public class OcrProcessImage implements BackgroundFunction<GcsEvent> {
 
   @Override
   public void accept(GcsEvent gcsEvent, Context context) {
-
-    // Validate parameters
     String bucket = gcsEvent.getBucket();
     if (bucket == null) {
       throw new IllegalArgumentException("Missing bucket parameter");
@@ -81,21 +77,17 @@ public class OcrProcessImage implements BackgroundFunction<GcsEvent> {
       }
 
       if (visionResponse.hasError()) {
-        // Log error
         logger.log(
             Level.SEVERE, "Error in vision API call: " + visionResponse.getError().getMessage());
         return;
       }
     } catch (IOException e) {
-      // Log error (since IOException cannot be thrown by a Cloud Function)
       logger.log(Level.SEVERE, "Error detecting text: " + e.getMessage(), e);
       return;
     }
 
     String text = visionResponse.getFullTextAnnotation().getText();
     logger.info("Extracted text from image: " + text);
-
-    // Send a Pub/Sub translation request for every language we're going to translate to
 
     logger.info("Sending translation request for language " + TO_LANGS);
     ApiMessage message = new ApiMessage(text, filename, TO_LANGS);
@@ -104,7 +96,6 @@ public class OcrProcessImage implements BackgroundFunction<GcsEvent> {
     try {
       publisher.publish(pubsubApiMessage).get();
     } catch (InterruptedException | ExecutionException e) {
-      // Log error
       logger.log(Level.SEVERE, "Error publishing translation request: " + e.getMessage(), e);
       return;
     }

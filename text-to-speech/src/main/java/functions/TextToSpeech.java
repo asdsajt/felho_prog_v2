@@ -1,6 +1,5 @@
 package functions;
 
-
 import com.google.cloud.functions.BackgroundFunction;
 import com.google.cloud.functions.Context;
 import com.google.cloud.storage.BlobId;

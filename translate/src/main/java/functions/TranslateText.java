@@ -20,7 +20,6 @@ import java.util.logging.Logger;
 public class TranslateText implements BackgroundFunction<Message> {
   private static final Logger logger = Logger.getLogger(TranslateText.class.getName());
 
-  // TODO<developer> set these environment variables
   private static final String PROJECT_ID = getenv("GCP_PROJECT");
   private static final String T2S_TOPIC_NAME = getenv("T2S_TOPIC");
   private static final String LOCATION_NAME = LocationName.of(PROJECT_ID, "global").toString();
@@ -71,7 +70,6 @@ public class TranslateText implements BackgroundFunction<Message> {
       publisher.publish(pubsubApiMessage).get();
       logger.info("Text translated to " + targetLang);
     } catch (InterruptedException | ExecutionException e) {
-      // Log error (since these exception types cannot be thrown by a function)
       logger.log(Level.SEVERE, "Error publishing translation save request: " + e.getMessage(), e);
     }
   }
